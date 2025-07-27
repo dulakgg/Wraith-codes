@@ -1,0 +1,14 @@
+{
+	"geode": "4.6.3",
+	"gd": {
+		"win": "2.2074",
+		"android": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
+	},
+	"id": "dulak.wraith-help",
+	"name": "Vault Codes Helper",
+	"version": "v1.0.0",
+	"developer": "Dulak",
+	"description": "Adds a Codes button to show vault codes"
+}
