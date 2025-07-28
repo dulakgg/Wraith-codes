@@ -159,11 +159,10 @@ protected:
             auto checkedItem = CCMenuItemSprite::create(checkedSprite, checkedSprite, nullptr);
             
             auto checkbox = CCMenuItemToggler::create(
+                uncheckedItem,
+                checkedItem
                 this,
                 menu_selector(CodesPopup::onCheckboxToggle),
-                uncheckedItem,
-                checkedItem,
-                nullptr
             );
             
             checkbox->setSelectedIndex(isChecked ? 1 : 0);
