@@ -165,7 +165,7 @@ protected:
                 menu_selector(CodesPopup::onCheckboxToggle),
             );
             
-            checkbox->toggle(isChecked ? 1 : 0);
+            checkbox->toggle(isChecked ? true : false);
             checkbox->setTag(i);
             checkbox->setAnchorPoint({0.5f, 0.5f});
             checkbox->setPosition({25.f, 15.f});
@@ -256,7 +256,7 @@ protected:
     void onCheckboxToggle(CCObject* sender) {
         auto toggle = static_cast<CCMenuItemToggler*>(sender);
         int index = toggle->getTag();
-        bool isChecked = toggle->getSelectedIndex() == 1;
+        bool isChecked = toggle->isToggled();
         
         Mod::get()->setSavedValue(m_codes[index].saveKey, isChecked);
         updateProgressDisplay();
