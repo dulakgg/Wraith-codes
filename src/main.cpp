@@ -281,19 +281,10 @@ protected:
         
         auto scene = CCDirector::sharedDirector()->getRunningScene();
         if (auto layer = scene->getChildByType<SecretLayer5>(0)) {
-            auto children = layer->getChildren();
-            for (int i = 0; i < children->count(); i++) {
-                auto child = children->objectAtIndex(i);
-                if (auto input = dynamic_cast<CCTextInputNode*>(child)) {
-                    input->setString(code.c_str());
-                    log::info("Auto-inputted code: {}", code);
-                    
-                    if (auto imeDispatcher = CCIMEDispatcher::sharedDispatcher()) {
-                        imeDispatcher->dispatchInsertText("\n", 1, KEY_Enter);
-                    }
-                    
-                    return;
-                }
+            if (m_textInput && m_wraithButton) {
+                m_textInput->setString(code.c_str());
+                log::info("Auto-inputted code: {}", code);
+                m_wraithButton->activate();
             }
         }
         
@@ -326,39 +317,19 @@ class $modify(MySecretLayer5, SecretLayer5) {
         auto winSize = CCDirector::sharedDirector()->getWinSize();
 
         auto codesButton = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("CODES", "goldFont.fnt", "GJ_button_04.png", 1.0f),
+            ButtonSprite::create("Codes", "goldFont.fnt", "GJ_button_04.png", 1.0f),
             this,
             menu_selector(MySecretLayer5::onCodesButton)
         );
 
-        CCMenu* menu = nullptr;
-        
-        if (auto existingMenu = this->getChildByID("main-menu")) {
-            menu = static_cast<CCMenu*>(existingMenu);
-        } else if (auto existingMenu = this->getChildByID("menu")) {
-            menu = static_cast<CCMenu*>(existingMenu);
-        } else {
-            log::info("Could not find a menu to put the button into, bailing out");
-            return true;
-        }
-        
-        if (!menu) {
-            menu = CCMenu::create();
-            menu->setPosition({0, 0});
-            menu->setID("codes-menu"_spr);
-            this->addChild(menu);
-        }
+        CCMenu* menu = this->getChildByType<CCMenu>(0);
+        if (!menu) return true;
 
-        codesButton->setPosition({winSize.width / 2 + 150.f, winSize.height / 2 - 170.f});
+        codesButton->setPosition(winSize - 15.f);
         codesButton->setID("codes-button"_spr);
         codesButton->setScale(0.8f);
-        codesButton->setZOrder(100);
         
         menu->addChild(codesButton);
-        
-        if (menu->getChildrenCount() > 1 && menu->getLayout()) {
-            menu->updateLayout();
-        }
 
         m_fields->m_codesButton = codesButton;
 
