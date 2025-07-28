@@ -155,12 +155,9 @@ protected:
             checkedSprite->setScale(0.8f);
             uncheckedSprite->setScale(0.8f);
             
-            auto uncheckedItem = CCMenuItemSprite::create(uncheckedSprite, uncheckedSprite, nullptr);
-            auto checkedItem = CCMenuItemSprite::create(checkedSprite, checkedSprite, nullptr);
-            
             auto checkbox = CCMenuItemToggler::create(
-                uncheckedItem,
-                checkedItem
+                uncheckedSprite,
+                checkedSprite
                 this,
                 menu_selector(CodesPopup::onCheckboxToggle),
             );
