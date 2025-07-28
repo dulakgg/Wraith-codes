@@ -166,7 +166,6 @@ protected:
             checkbox->toggle(isChecked ? true : false);
             checkbox->setAnchorPoint({0.5f, 0.5f});
             checkbox->setPosition({25.f, 15.f});
-            checkbox->setEnabled(false);
             
             auto codeLabel = CCLabelBMFont::create(codeInfo.code.c_str(), "goldFont.fnt");
             codeLabel->setScale(0.65f);
