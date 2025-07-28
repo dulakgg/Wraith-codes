@@ -274,9 +274,6 @@ protected:
         int index = button->getTag();
         std::string code = m_codes[index].code;
         
-        Mod::get()->setSavedValue(m_codes[index].saveKey, true);
-        updateProgressDisplay();
-        
         this->onClose(nullptr);
         
         auto scene = CCDirector::sharedDirector()->getRunningScene();
@@ -285,6 +282,8 @@ protected:
                 layer->m_textInput->setString(code.c_str());
                 log::info("Auto-inputted code: {}", code);
                 layer->m_wraithButton->activate();
+                Mod::get()->setSavedValue(m_codes[index].saveKey, true);
+                updateProgressDisplay();
             }
         }
         
