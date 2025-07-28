@@ -155,19 +155,15 @@ protected:
             checkedSprite->setScale(0.8f);
             uncheckedSprite->setScale(0.8f);
             
-            auto uncheckedItem = CCMenuItemSprite::create(uncheckedSprite, uncheckedSprite, nullptr);
-            auto checkedItem = CCMenuItemSprite::create(checkedSprite, checkedSprite, nullptr);
-            
-            auto checkbox = CCMenuItemToggle::createWithTarget(
+            auto checkbox = CCMenuItemToggler::create(
+                uncheckedSprite,
+                checkedSprite,
                 this,
-                menu_selector(CodesPopup::onCheckboxToggle),
-                uncheckedItem,
-                checkedItem,
-                nullptr
+                menu_selector(CodesPopup::onCheckboxToggle)
             );
             
-            checkbox->setSelectedIndex(isChecked ? 1 : 0);
             checkbox->setTag(i);
+            checkbox->toggle(isChecked ? true : false);
             checkbox->setAnchorPoint({0.5f, 0.5f});
             checkbox->setPosition({25.f, 15.f});
             
@@ -255,11 +251,12 @@ protected:
     }
     
     void onCheckboxToggle(CCObject* sender) {
-        auto toggle = static_cast<CCMenuItemToggle*>(sender);
+        auto toggle = static_cast<CCMenuItemToggler*>(sender);
         int index = toggle->getTag();
-        bool isChecked = toggle->getSelectedIndex() == 1;
+        bool isChecked = toggle->isToggled();
+        bool originalValue = Mod::get()->getSavedValue<bool>(m_codes[index].saveKey, false);
         
-        Mod::get()->setSavedValue(m_codes[index].saveKey, isChecked);
+        Mod::get()->setSavedValue(m_codes[index].saveKey, !originalValue);
         updateProgressDisplay();
         
         log::info("Code {} {} {}", 
@@ -274,26 +271,16 @@ protected:
         int index = button->getTag();
         std::string code = m_codes[index].code;
         
-        Mod::get()->setSavedValue(m_codes[index].saveKey, true);
-        updateProgressDisplay();
-        
         this->onClose(nullptr);
         
         auto scene = CCDirector::sharedDirector()->getRunningScene();
         if (auto layer = scene->getChildByType<SecretLayer5>(0)) {
-            auto children = layer->getChildren();
-            for (int i = 0; i < children->count(); i++) {
-                auto child = children->objectAtIndex(i);
-                if (auto input = dynamic_cast<CCTextInputNode*>(child)) {
-                    input->setString(code.c_str());
-                    log::info("Auto-inputted code: {}", code);
-                    
-                    if (auto imeDispatcher = CCIMEDispatcher::sharedDispatcher()) {
-                        imeDispatcher->dispatchInsertText("\n", 1, KEY_Enter);
-                    }
-                    
-                    return;
-                }
+            if (layer->m_textInput && layer->m_wraithButton) {
+                layer->m_textInput->setString(code.c_str());
+                log::info("Auto-inputted code: {}", code);
+                layer->m_wraithButton->activate();
+                Mod::get()->setSavedValue(m_codes[index].saveKey, true);
+                updateProgressDisplay();
             }
         }
         
@@ -323,49 +310,24 @@ class $modify(MySecretLayer5, SecretLayer5) {
             return false;
         }
 
-
         auto winSize = CCDirector::sharedDirector()->getWinSize();
 
+        auto buttonSprite = ButtonSprite::create("Codes", "goldFont.fnt", "GJ_button_04.png", 1.0f);
+        buttonSprite->setScale(0.8f);
+
         auto codesButton = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("CODES", "goldFont.fnt", "GJ_button_04.png", 1.0f),
+            buttonSprite,
             this,
             menu_selector(MySecretLayer5::onCodesButton)
         );
 
-        CCMenu* menu = nullptr;
-        
-        if (auto existingMenu = this->getChildByID("main-menu")) {
-            menu = static_cast<CCMenu*>(existingMenu);
-        } else if (auto existingMenu = this->getChildByID("menu")) {
-            menu = static_cast<CCMenu*>(existingMenu);
-        } else {
-            auto children = this->getChildren();
-            for (int i = 0; i < children->count(); i++) {
-                auto child = dynamic_cast<CCMenu*>(children->objectAtIndex(i));
-                if (child) {
-                    menu = child;
-                    break;
-                }
-            }
-        }
-        
-        if (!menu) {
-            menu = CCMenu::create();
-            menu->setPosition({0, 0});
-            menu->setID("codes-menu"_spr);
-            this->addChild(menu);
-        }
+        CCMenu* menu = this->getChildByType<CCMenu>(0);
+        if (!menu) return true;
 
-        codesButton->setPosition({winSize.width / 2 + 150.f, winSize.height / 2 - 170.f});
+        codesButton->setPosition({winSize.width - codesButton->getContentWidth(), 0.f});
         codesButton->setID("codes-button"_spr);
-        codesButton->setScale(0.8f);
-        codesButton->setZOrder(100);
         
         menu->addChild(codesButton);
-        
-        if (menu->getChildrenCount() > 1) {
-            menu->updateLayout();
-        }
 
         m_fields->m_codesButton = codesButton;
 
