@@ -1,16 +1,21 @@
 {
 	"geode": "4.6.3",
 	"gd": {
-		"win": "2.2074"
+		"win": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074",
+		"android": "2.2074"
 	},
 	"id": "dulak.wraith-help",
-	"name": "Wraith helper",
+	"name": "Wraith Helper",
 	"version": "v1.0.0",
 	"developer": "Dulak",
 	"description": "Wraith codes tracker",
-	"links":
-    {
+	"links": {
         "source": "https://github.com/dulakgg/Wraith-codes"
+    },
+	"dependencies": {
+        "geode.node-ids": ">=1.21.1"
     },
 	"tags": ["enhancement", "interface", "offline"]
 }

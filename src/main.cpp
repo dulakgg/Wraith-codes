@@ -323,7 +323,6 @@ class $modify(MySecretLayer5, SecretLayer5) {
             return false;
         }
 
-
         auto winSize = CCDirector::sharedDirector()->getWinSize();
 
         auto codesButton = CCMenuItemSpriteExtra::create(
@@ -339,14 +338,8 @@ class $modify(MySecretLayer5, SecretLayer5) {
         } else if (auto existingMenu = this->getChildByID("menu")) {
             menu = static_cast<CCMenu*>(existingMenu);
         } else {
-            auto children = this->getChildren();
-            for (int i = 0; i < children->count(); i++) {
-                auto child = dynamic_cast<CCMenu*>(children->objectAtIndex(i));
-                if (child) {
-                    menu = child;
-                    break;
-                }
-            }
+            log::info("Could not find a menu to put the button into, bailing out");
+            return true;
         }
         
         if (!menu) {
@@ -363,7 +356,7 @@ class $modify(MySecretLayer5, SecretLayer5) {
         
         menu->addChild(codesButton);
         
-        if (menu->getChildrenCount() > 1) {
+        if (menu->getChildrenCount() > 1 && menu->getLayout()) {
             menu->updateLayout();
         }
 
