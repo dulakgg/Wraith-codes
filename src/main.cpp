@@ -254,8 +254,9 @@ protected:
         auto toggle = static_cast<CCMenuItemToggler*>(sender);
         int index = toggle->getTag();
         bool isChecked = toggle->isToggled();
+        bool originalValue = Mod::get()->getSavedValue<bool>(m_codes[index].saveKey, false);
         
-        Mod::get()->setSavedValue(m_codes[index].saveKey, isChecked);
+        Mod::get()->setSavedValue(m_codes[index].saveKey, !originalValue);
         updateProgressDisplay();
         
         log::info("Code {} {} {}", 
@@ -323,7 +324,7 @@ class $modify(MySecretLayer5, SecretLayer5) {
         CCMenu* menu = this->getChildByType<CCMenu>(0);
         if (!menu) return true;
 
-        codesButton->setPosition({winSize.width - (codesButton->getContentWidth() / 2.f), 0.f});
+        codesButton->setPosition({winSize.width - codesButton->getContentWidth(), 0.f});
         codesButton->setID("codes-button"_spr);
         
         menu->addChild(codesButton);
