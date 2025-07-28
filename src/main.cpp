@@ -165,7 +165,7 @@ protected:
                 menu_selector(CodesPopup::onCheckboxToggle),
             );
             
-            checkbox->setSelectedIndex(isChecked ? 1 : 0);
+            checkbox->toggle(isChecked ? 1 : 0);
             checkbox->setTag(i);
             checkbox->setAnchorPoint({0.5f, 0.5f});
             checkbox->setPosition({25.f, 15.f});
