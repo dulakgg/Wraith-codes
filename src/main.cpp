@@ -158,7 +158,7 @@ protected:
             auto uncheckedItem = CCMenuItemSprite::create(uncheckedSprite, uncheckedSprite, nullptr);
             auto checkedItem = CCMenuItemSprite::create(checkedSprite, checkedSprite, nullptr);
             
-            auto checkbox = CCMenuItemToggler::createWithTarget(
+            auto checkbox = CCMenuItemToggler::create(
                 this,
                 menu_selector(CodesPopup::onCheckboxToggle),
                 uncheckedItem,
@@ -255,7 +255,7 @@ protected:
     }
     
     void onCheckboxToggle(CCObject* sender) {
-        auto toggle = static_cast<CCMenuItemToggle*>(sender);
+        auto toggle = static_cast<CCMenuItemToggler*>(sender);
         int index = toggle->getTag();
         bool isChecked = toggle->getSelectedIndex() == 1;
         
