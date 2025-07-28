@@ -311,8 +311,11 @@ class $modify(MySecretLayer5, SecretLayer5) {
 
         auto winSize = CCDirector::sharedDirector()->getWinSize();
 
+        auto buttonSprite = ButtonSprite::create("Codes", "goldFont.fnt", "GJ_button_04.png", 1.0f);
+        buttonSprite->setScale(0.8f);
+
         auto codesButton = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Codes", "goldFont.fnt", "GJ_button_04.png", 1.0f),
+            buttonSprite,
             this,
             menu_selector(MySecretLayer5::onCodesButton)
         );
@@ -322,7 +325,6 @@ class $modify(MySecretLayer5, SecretLayer5) {
 
         codesButton->setPosition({winSize.width - (codesButton.getContentWidth() / 2.f), 0.f});
         codesButton->setID("codes-button"_spr);
-        codesButton->setScale(0.8f);
         
         menu->addChild(codesButton);
 
