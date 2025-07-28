@@ -125,8 +125,8 @@ protected:
     void setupProgressDisplay() {
         m_progressLabel = CCLabelBMFont::create("0/29", "bigFont.fnt");
         m_progressLabel->setScale(0.5f);
-        m_progressLabel->setAnchorPoint({0.5f, 0.5f});
-        m_progressLabel->setPosition({m_size.width / 2, m_size.height - 50.f});
+        m_progressLabel->setAnchorPoint({1.0f, 1.0f});
+        m_progressLabel->setPosition({m_size.width - 20.f, m_size.height - 20.f});
         m_progressLabel->setColor({100, 255, 100});
         
         m_mainLayer->addChild(m_progressLabel);
