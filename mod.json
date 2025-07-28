@@ -1,14 +1,16 @@
 {
 	"geode": "4.6.3",
 	"gd": {
-		"win": "2.2074",
-		"android": "2.2074",
-		"mac": "2.2074",
-		"ios": "2.2074"
+		"win": "2.2074"
 	},
 	"id": "dulak.wraith-help",
-	"name": "Vault Codes Helper",
+	"name": "Wraith helper",
 	"version": "v1.0.0",
 	"developer": "Dulak",
-	"description": "Vault codes tracker with checkboxes"
+	"description": "Wraith codes tracker",
+	"links":
+    {
+        "source": "https://github.com/dulakgg/Wraith-codes"
+    },
+	"tags": ["enhancement", "interface", "utility"]
 }
