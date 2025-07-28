@@ -1,5 +1,4 @@
 #include <Geode/Geode.hpp>
-#include <Geode/ui/ScrollLayer.hpp>
 
 using namespace geode::prelude;
 
@@ -10,7 +9,7 @@ struct CodeInfo {
     std::string saveKey; // Key used for saving checkbox state
 };
 
-// Custom popup for displaying codes with checkboxes
+// Custom popup for displaying codes with checkboxes and pagination
 class CodesPopup : public geode::Popup<> {
 protected:
     // List of all Geometry Dash codes
@@ -33,41 +32,164 @@ protected:
         {"CHALLENGE", "Special mode", "checkbox_challenge"}
     };
 
-    ScrollLayer* m_scrollLayer = nullptr;
+    static constexpr size_t CODES_PER_PAGE = 5;
+    size_t m_currentPage = 0;
     CCMenu* m_contentMenu = nullptr;
+    CCLabelBMFont* m_pageLabel = nullptr;
+    CCMenuItemSpriteExtra* m_prevBtn = nullptr;
+    CCMenuItemSpriteExtra* m_nextBtn = nullptr;
 
     bool setup() override {
         this->setTitle("Vault Codes Tracker");
         
-        // Create scroll layer for the codes - even smaller height
-        auto contentSize = CCSize{320.f, 180.f}; // Reduced height further
-        m_scrollLayer = ScrollLayer::create(contentSize);
-        m_scrollLayer->setPosition({
-            (m_size.width - contentSize.width) / 2,
-            (m_size.height - contentSize.height) / 2 + 5.f
-        });
-        
-        // Create content menu inside scroll layer
+        // Create content menu with proper layout
         m_contentMenu = CCMenu::create();
-        m_contentMenu->setPosition({0, 0});
-        m_contentMenu->setContentSize(contentSize);
+        m_contentMenu->setContentSize({280.f, 150.f}); // Much smaller for compact popup
+        m_contentMenu->ignoreAnchorPointForPosition(false); // Use proper anchor points
+        m_contentMenu->setAnchorPoint({0.5f, 0.5f}); // Center anchor
+        // Position relative to popup center
+        m_contentMenu->setPosition({m_size.width / 2, m_size.height / 2 + 5.f}); 
         
-        // Add code entries with checkboxes
-        float totalHeight = m_codes.size() * 32.f + 20.f; // Optimized spacing
-        float yPos = totalHeight - 20.f; // Start from actual top of content
-        for (size_t i = 0; i < m_codes.size(); i++) {
+        // Set up column layout for content
+        m_contentMenu->setLayout(ColumnLayout::create()
+            ->setAxisAlignment(AxisAlignment::Start)
+            ->setGap(2.f) // Smaller gap for compact layout
+        );
+        
+        // Create pagination controls
+        setupPaginationControls();
+        
+        // Load the first page
+        loadCurrentPage();
+        
+        m_mainLayer->addChild(m_contentMenu);
+        
+        // Add "Clear All" and "Check All" buttons using proper layout
+        auto actionMenu = CCMenu::create();
+        actionMenu->setContentSize({200.f, 40.f});
+        actionMenu->ignoreAnchorPointForPosition(false);
+        actionMenu->setAnchorPoint({0.5f, 0.5f});
+        actionMenu->setPosition({m_size.width / 2, 15.f}); // Bottom of popup
+        
+        // Set up row layout for action buttons
+        actionMenu->setLayout(RowLayout::create()
+            ->setAxisAlignment(AxisAlignment::Center)
+            ->setGap(30.f)
+        );
+        
+        auto clearAllBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("Clear All", "goldFont.fnt", "GJ_button_02.png", 0.65f),
+            this,
+            menu_selector(CodesPopup::onClearAll)
+        );
+        
+        auto checkAllBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("Check All", "goldFont.fnt", "GJ_button_01.png", 0.65f),
+            this,
+            menu_selector(CodesPopup::onCheckAll)
+        );
+        
+        actionMenu->addChild(clearAllBtn);
+        actionMenu->addChild(checkAllBtn);
+        actionMenu->updateLayout();
+        
+        m_mainLayer->addChild(actionMenu);
+
+        return true;
+    }
+    
+    void setupPaginationControls() {
+        // Create a separate menu for pagination controls
+        auto paginationMenu = CCMenu::create();
+        paginationMenu->setContentSize({300.f, 40.f});
+        paginationMenu->ignoreAnchorPointForPosition(false);
+        paginationMenu->setAnchorPoint({0.5f, 0.5f});
+        // Position at bottom of popup
+        paginationMenu->setPosition({m_size.width / 2, 40.f});
+        
+        // Set up row layout for pagination
+        paginationMenu->setLayout(RowLayout::create()
+            ->setAxisAlignment(AxisAlignment::Center)
+            ->setGap(20.f)
+        );
+        
+        // Create Previous button (left arrow)
+        auto prevSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
+        prevSprite->setScale(0.8f);
+        prevSprite->setFlipX(false); // Don't flip for left
+        m_prevBtn = CCMenuItemSpriteExtra::create(
+            prevSprite,
+            this,
+            menu_selector(CodesPopup::onPrevPage)
+        );
+        
+        // Create Next button (right arrow)
+        auto nextSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
+        nextSprite->setScale(0.8f);
+        nextSprite->setFlipX(true); // Flip for right
+        m_nextBtn = CCMenuItemSpriteExtra::create(
+            nextSprite,
+            this,
+            menu_selector(CodesPopup::onNextPage)
+        );
+        
+        // Create page label
+        m_pageLabel = CCLabelBMFont::create("Page 1/4", "goldFont.fnt");
+        m_pageLabel->setScale(0.7f);
+        
+        // Add to pagination menu
+        paginationMenu->addChild(m_prevBtn);
+        paginationMenu->addChild(m_pageLabel);
+        paginationMenu->addChild(m_nextBtn);
+        
+        // Update layout
+        paginationMenu->updateLayout();
+        
+        // Add pagination menu to main layer
+        m_mainLayer->addChild(paginationMenu);
+        
+        // Update button states
+        updatePaginationControls();
+        
+        log::info("Pagination controls created with layout - Prev: {}, Next: {}, Label: {}", 
+                  m_prevBtn ? "OK" : "FAIL", 
+                  m_nextBtn ? "OK" : "FAIL", 
+                  m_pageLabel ? "OK" : "FAIL");
+    }
+    
+    void loadCurrentPage() {
+        // Clear current content
+        m_contentMenu->removeAllChildren();
+        
+        // Calculate page bounds
+        size_t startIndex = m_currentPage * CODES_PER_PAGE;
+        size_t endIndex = std::min(startIndex + CODES_PER_PAGE, m_codes.size());
+        
+        // Add code entries for current page
+        for (size_t i = startIndex; i < endIndex; i++) {
             auto& codeInfo = m_codes[i];
             
-            // Get saved checkbox state (default false)
+            // Create a container for each code entry
+            auto entryContainer = CCMenu::create();
+            entryContainer->setContentSize({260.f, 25.f}); // Even smaller for very compact popup
+            entryContainer->ignoreAnchorPointForPosition(false);
+            entryContainer->setAnchorPoint({0.5f, 0.5f});
+            
+            // Set up row layout for the entry
+            entryContainer->setLayout(RowLayout::create()
+                ->setAxisAlignment(AxisAlignment::Start)
+                ->setGap(10.f)
+            );
+            
+            // Get saved checkbox state
             bool isChecked = Mod::get()->getSavedValue<bool>(codeInfo.saveKey, false);
             
             // Create checkbox toggle button
             auto checkedSprite = CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png");
             auto uncheckedSprite = CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png");
-            checkedSprite->setScale(0.85f); // Optimized size
+            checkedSprite->setScale(0.85f);
             uncheckedSprite->setScale(0.85f);
             
-            // Create menu items from sprites
             auto uncheckedItem = CCMenuItemSprite::create(uncheckedSprite, uncheckedSprite, nullptr);
             auto checkedItem = CCMenuItemSprite::create(checkedSprite, checkedSprite, nullptr);
             
@@ -79,67 +201,82 @@ protected:
                 nullptr
             );
             
-            // Set initial state
             checkbox->setSelectedIndex(isChecked ? 1 : 0);
-            checkbox->setTag(i); // Use index to identify which code this is
-            checkbox->setPosition({30.f, yPos}); // Better positioning
+            checkbox->setTag(i); // Use original index
+            
+            // Create text container for code and description
+            auto textContainer = CCNode::create();
+            textContainer->setContentSize({200.f, 25.f}); // Smaller for compact layout
+            textContainer->setAnchorPoint({0.f, 0.5f});
             
             // Create code label
             auto codeLabel = CCLabelBMFont::create(codeInfo.code.c_str(), "goldFont.fnt");
-            codeLabel->setScale(0.75f);
-            codeLabel->setPosition({75.f, yPos + 5.f});
+            codeLabel->setScale(0.7f); // Slightly smaller
             codeLabel->setAnchorPoint({0, 0.5f});
+            codeLabel->setPosition({0.f, 15.f}); // Adjusted for smaller container
             
             // Create description label
             auto descLabel = CCLabelBMFont::create(codeInfo.description.c_str(), "chatFont.fnt");
-            descLabel->setScale(0.85f);
-            descLabel->setPosition({75.f, yPos - 7.f});
+            descLabel->setScale(0.8f); // Slightly smaller
             descLabel->setAnchorPoint({0, 0.5f});
+            descLabel->setPosition({0.f, 3.f}); // Adjusted for smaller container
             descLabel->setColor({180, 180, 180});
             
-            // Add to menu
-            m_contentMenu->addChild(checkbox);
-            m_contentMenu->addChild(codeLabel);
-            m_contentMenu->addChild(descLabel);
+            // Add labels to text container
+            textContainer->addChild(codeLabel);
+            textContainer->addChild(descLabel);
             
-            yPos -= 32.f; // Optimized spacing
+            // Add checkbox and text to entry container
+            entryContainer->addChild(checkbox);
+            entryContainer->addChild(textContainer);
+            
+            // Update entry layout
+            entryContainer->updateLayout();
+            
+            // Add entry to main content menu
+            m_contentMenu->addChild(entryContainer);
         }
         
-        // Set content size for scrolling with proper bounds
-        m_contentMenu->setContentSize({contentSize.width, totalHeight});
-        m_scrollLayer->m_contentLayer->addChild(m_contentMenu);
-        m_scrollLayer->m_contentLayer->setContentSize({contentSize.width, totalHeight});
+        // Update main content layout
+        m_contentMenu->updateLayout();
         
-        // Position content menu to show first items at top and enable proper scrolling
-        if (totalHeight > contentSize.height) {
-            // Content is larger than visible area - position to show top items first
-            m_contentMenu->setPosition({0, contentSize.height - totalHeight});
-        } else {
-            // Content fits entirely - position normally
-            m_contentMenu->setPosition({0, 0});
+        // Update pagination controls
+        updatePaginationControls();
+    }
+    
+    void updatePaginationControls() {
+        size_t totalPages = (m_codes.size() + CODES_PER_PAGE - 1) / CODES_PER_PAGE;
+        
+        // Update page label
+        std::string pageText = fmt::format("Page {}/{}", m_currentPage + 1, totalPages);
+        m_pageLabel->setString(pageText.c_str());
+        
+        // Update button states
+        m_prevBtn->setEnabled(m_currentPage > 0);
+        m_nextBtn->setEnabled(m_currentPage < totalPages - 1);
+        
+        // Update button opacity for visual feedback
+        m_prevBtn->setOpacity(m_currentPage > 0 ? 255 : 100);
+        m_nextBtn->setOpacity(m_currentPage < totalPages - 1 ? 255 : 100);
+    }
+    
+    void onPrevPage(CCObject*) {
+        log::info("Previous page button clicked - Current page: {}", m_currentPage);
+        if (m_currentPage > 0) {
+            m_currentPage--;
+            loadCurrentPage();
+            log::info("Moved to page: {}", m_currentPage);
         }
-        
-        m_mainLayer->addChild(m_scrollLayer);
-        
-        // Add "Clear All" and "Check All" buttons with better styling
-        auto clearAllBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Clear All", "goldFont.fnt", "GJ_button_02.png", 0.65f), // Red button for clear action
-            this,
-            menu_selector(CodesPopup::onClearAll)
-        );
-        clearAllBtn->setPosition({-65.f, -110.f}); // Better positioning
-        
-        auto checkAllBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Check All", "goldFont.fnt", "GJ_button_01.png", 0.65f), // Green button for check action
-            this,
-            menu_selector(CodesPopup::onCheckAll)
-        );
-        checkAllBtn->setPosition({65.f, -110.f}); // Better positioning
-        
-        m_buttonMenu->addChild(clearAllBtn);
-        m_buttonMenu->addChild(checkAllBtn);
-        
-        return true;
+    }
+    
+    void onNextPage(CCObject*) {
+        size_t totalPages = (m_codes.size() + CODES_PER_PAGE - 1) / CODES_PER_PAGE;
+        log::info("Next page button clicked - Current page: {}, Total pages: {}", m_currentPage, totalPages);
+        if (m_currentPage < totalPages - 1) {
+            m_currentPage++;
+            loadCurrentPage();
+            log::info("Moved to page: {}", m_currentPage);
+        }
     }
     
     void onCheckboxToggle(CCObject* sender) {
@@ -158,37 +295,29 @@ protected:
     }
     
     void onClearAll(CCObject*) {
-        // Uncheck all checkboxes and save states
-        auto children = m_contentMenu->getChildren();
-        for (int i = 0; i < children->count(); i++) {
-            auto child = dynamic_cast<CCMenuItemToggle*>(children->objectAtIndex(i));
-            if (child) {
-                child->setSelectedIndex(0); // Set to unchecked
-                int index = child->getTag();
-                Mod::get()->setSavedValue(m_codes[index].saveKey, false);
-            }
+        // Clear all codes (not just current page)
+        for (size_t i = 0; i < m_codes.size(); i++) {
+            Mod::get()->setSavedValue(m_codes[i].saveKey, false);
         }
+        // Reload current page to reflect changes
+        loadCurrentPage();
         log::info("All codes cleared");
     }
     
     void onCheckAll(CCObject*) {
-        // Check all checkboxes and save states
-        auto children = m_contentMenu->getChildren();
-        for (int i = 0; i < children->count(); i++) {
-            auto child = dynamic_cast<CCMenuItemToggle*>(children->objectAtIndex(i));
-            if (child) {
-                child->setSelectedIndex(1); // Set to checked
-                int index = child->getTag();
-                Mod::get()->setSavedValue(m_codes[index].saveKey, true);
-            }
+        // Check all codes (not just current page)
+        for (size_t i = 0; i < m_codes.size(); i++) {
+            Mod::get()->setSavedValue(m_codes[i].saveKey, true);
         }
+        // Reload current page to reflect changes
+        loadCurrentPage();
         log::info("All codes checked");
     }
 
 public:
     static CodesPopup* create() {
         auto ret = new CodesPopup();
-        if (ret->initAnchored(360.f, 280.f)) { // Optimized popup size
+        if (ret->initAnchored(340.f, 280.f)) { // Much smaller and more compact
             ret->autorelease();
             return ret;
         }
