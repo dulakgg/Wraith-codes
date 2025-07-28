@@ -10,5 +10,5 @@
 	"name": "Vault Codes Helper",
 	"version": "v1.0.0",
 	"developer": "Dulak",
-	"description": "Adds a Codes button to show vault codes"
+	"description": "Vault codes tracker with checkboxes"
 }
