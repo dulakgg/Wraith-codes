@@ -158,7 +158,7 @@ protected:
             auto uncheckedItem = CCMenuItemSprite::create(uncheckedSprite, uncheckedSprite, nullptr);
             auto checkedItem = CCMenuItemSprite::create(checkedSprite, checkedSprite, nullptr);
             
-            auto checkbox = CCMenuItemToggle::createWithTarget(
+            auto checkbox = CCMenuItemToggler::createWithTarget(
                 this,
                 menu_selector(CodesPopup::onCheckboxToggle),
                 uncheckedItem,
