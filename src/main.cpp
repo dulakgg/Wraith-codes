@@ -320,7 +320,7 @@ class $modify(MySecretLayer5, SecretLayer5) {
         CCMenu* menu = this->getChildByType<CCMenu>(0);
         if (!menu) return true;
 
-        codesButton->setPosition(winSize - 15.f);
+        codesButton->setPosition({winSize.width - (codesButton.getContentWidth() / 2.f), 0.f});
         codesButton->setID("codes-button"_spr);
         codesButton->setScale(0.8f);
         
