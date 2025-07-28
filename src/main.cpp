@@ -281,10 +281,10 @@ protected:
         
         auto scene = CCDirector::sharedDirector()->getRunningScene();
         if (auto layer = scene->getChildByType<SecretLayer5>(0)) {
-            if (m_textInput && m_wraithButton) {
-                m_textInput->setString(code.c_str());
+            if (layer->m_textInput && layer->m_wraithButton) {
+                layer->m_textInput->setString(code.c_str());
                 log::info("Auto-inputted code: {}", code);
-                m_wraithButton->activate();
+                layer->m_wraithButton->activate();
             }
         }
         
