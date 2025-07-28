@@ -159,7 +159,7 @@ protected:
                 uncheckedSprite,
                 checkedSprite,
                 this,
-                menu_selector(CodesPopup::onCheckboxToggle),
+                menu_selector(CodesPopup::onCheckboxToggle)
             );
             
             checkbox->toggle(isChecked ? true : false);
