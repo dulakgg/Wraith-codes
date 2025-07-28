@@ -157,7 +157,7 @@ protected:
             
             auto checkbox = CCMenuItemToggler::create(
                 uncheckedSprite,
-                checkedSprite
+                checkedSprite,
                 this,
                 menu_selector(CodesPopup::onCheckboxToggle),
             );
