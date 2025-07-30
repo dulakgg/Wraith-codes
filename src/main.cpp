@@ -1,4 +1,9 @@
+
 #include <Geode/Geode.hpp>
+#include <cocos2d.h>
+#include <cocos-ext.h>
+#include <vector>
+#include <string>
 
 using namespace geode::prelude;
 
@@ -10,6 +15,9 @@ struct CodeInfo {
 
 class CodesPopup : public geode::Popup<> {
 protected:
+    void registerWithTouchDispatcher() override {
+        CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, -502, true);
+    }
     std::vector<CodeInfo> m_codes = {
         {"putyahandsup", "UFO 71", "putyahandsup_checked"},
         {"thickofit", "1 Mana Orb", "thickofit_checked"},
@@ -37,7 +45,6 @@ protected:
         {"skylinept2", "Cube 309", "skylinept2_checked"},
         {"boogie", "Wave 92", "boogie_checked"},
         {"buttonmasher", "UFO 63", "buttonmasher_checked"},
-        {"gdawards", "Cube 485", "gdawards_checked"},
         {"ncsalbum", "Jetpack 8", "ncsalbum_checked"},
         {"gullible", "1 Mana Orb", "gullible_checked"}
     };
@@ -52,6 +59,7 @@ protected:
 
     bool setup() override {
         this->setTitle("Wraith Helper");
+        this->setTouchPriority(-502);
         
         m_contentMenu = CCMenu::create();
         m_contentMenu->setContentSize({320.f, 180.f});
