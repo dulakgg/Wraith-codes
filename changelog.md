@@ -1,4 +1,4 @@
-v1.2
+v1.2.0
 Removed expired gdawards code.
 
 No replacement event code added (none currently available).
