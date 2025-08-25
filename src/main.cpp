@@ -18,6 +18,7 @@ protected:
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, -502, true);
     }
     std::vector<CodeInfo> m_codes = {
+        {"ravenousbeasts", "UFO 57", "ravenousbeasts_checked"},
         {"putyahandsup", "UFO 71", "putyahandsup_checked"},
         {"thickofit", "1 Mana Orb", "thickofit_checked"},
         {"skibidi", "1 Mana Orb", "skibidi_checked"},
