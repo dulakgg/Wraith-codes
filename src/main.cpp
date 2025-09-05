@@ -1,9 +1,14 @@
-
 #include <Geode/Geode.hpp>
 #include <cocos2d.h>
 #include <cocos-ext.h>
 #include <vector>
 #include <string>
+#include <Geode/modify/SecretLayer5.hpp>
+#include <Geode/modify/MenuLayer.hpp>
+#include <Geode/utils/web.hpp>
+#include <Geode/loader/Event.hpp>
+#include <regex>
+#include <functional>
 
 using namespace geode::prelude;
 
@@ -17,37 +22,7 @@ protected:
     void registerWithTouchDispatcher() override {
         CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, -502, true);
     }
-    std::vector<CodeInfo> m_codes = {
-        {"ravenousbeasts", "UFO 57", "ravenousbeasts_checked"},
-        {"putyahandsup", "UFO 71", "putyahandsup_checked"},
-        {"thickofit", "1 Mana Orb", "thickofit_checked"},
-        {"skibidi", "1 Mana Orb", "skibidi_checked"},
-        {"fireinthehole", "1 Fire Shard", "fireinthehole_checked"},
-        {"robtopisnice", "10 Mana Orbs", "robtopisnice_checked"},
-        {"bussin", "69 Mana Orbs", "bussin_checked"},
-        {"wellmet", "5 Diamonds", "wellmet_checked"},
-        {"checksteam", "1 Demon Key", "checksteam_checked"},
-        {"touchgrass", "1 Earth Shard", "touchgrass_checked"},
-        {"wateronthehill", "1 Ice Shard", "wateronthehill_checked"},
-        {"backondash", "Cube 409", "backondash_checked"},
-        {"key", "1 Demon Key", "key_checked"},
-        {"geometry", "Ball 90", "geometry_checked"},
-        {"citadel", "Cube 231", "citadel_checked"},
-        {"retrospective", "Ship 121", "retrospective_checked"},
-        {"iaminpain", "10 Diamonds, 100 Mana Orbs", "iaminpain_checked"},
-        {"ruins", "Ball 91", "ruins_checked"},
-        {"spacegauntlet", "20 Diamonds, 1 Demon Key, 2 Metal Shards", "spacegauntlet_checked"},
-        {"cheatcodes", "UFO 138", "cheatcodes_checked"},
-        {"backstreetboy", "Robot 37", "backstreetboy_checked"},
-        {"noelelectra", "Swing 17", "noelelectra_checked"},
-        {"gd2025", "1 Yellow Key, 25 Diamonds, 25 Mana Orbs", "gd2025_checked"},
-        {"duckstep", "Ship 146", "duckstep_checked"},
-        {"skylinept2", "Cube 309", "skylinept2_checked"},
-        {"boogie", "Wave 92", "boogie_checked"},
-        {"buttonmasher", "UFO 63", "buttonmasher_checked"},
-        {"ncsalbum", "Jetpack 8", "ncsalbum_checked"},
-        {"gullible", "1 Mana Orb", "gullible_checked"}
-    };
+    std::vector<CodeInfo> m_codes = {};
 
     static constexpr size_t CODES_PER_PAGE = 5;
     size_t m_currentPage = 0;
@@ -58,7 +33,7 @@ protected:
     CCMenuItemSpriteExtra* m_nextBtn = nullptr;
 
     bool setup() override {
-        this->setTitle("Wraith Helper");
+        this->setTitle("Codes");
         this->setTouchPriority(-502);
         
         m_contentMenu = CCMenu::create();
@@ -123,11 +98,6 @@ protected:
         m_mainLayer->addChild(paginationMenu);
         
         updatePaginationControls();
-        
-        log::info("Pagination controls created with layout - Prev: {}, Next: {}, Label: {}", 
-                  m_prevBtn ? "OK" : "FAIL", 
-                  m_nextBtn ? "OK" : "FAIL", 
-                  m_pageLabel ? "OK" : "FAIL");
     }
     
     void setupProgressDisplay() {
@@ -218,11 +188,11 @@ protected:
         m_progressLabel->setString(progressText.c_str());
         
         if (redeemedCount == m_codes.size()) {
-            m_progressLabel->setColor({255, 215, 0});
+            m_progressLabel->setColor({ 255, 255, 255 });
         } else if (redeemedCount > m_codes.size() / 2) {
             m_progressLabel->setColor({100, 255, 100});
         } else {
-            m_progressLabel->setColor({255, 255, 100});
+            m_progressLabel->setColor({ 255, 255, 255 });
         }
     }
     
@@ -240,21 +210,17 @@ protected:
     }
     
     void onPrevPage(CCObject*) {
-        log::info("Previous page button clicked - Current page: {}", m_currentPage);
         if (m_currentPage > 0) {
             m_currentPage--;
             loadCurrentPage();
-            log::info("Moved to page: {}", m_currentPage);
         }
     }
     
     void onNextPage(CCObject*) {
         size_t totalPages = (m_codes.size() + CODES_PER_PAGE - 1) / CODES_PER_PAGE;
-        log::info("Next page button clicked - Current page: {}, Total pages: {}", m_currentPage, totalPages);
         if (m_currentPage < totalPages - 1) {
             m_currentPage++;
             loadCurrentPage();
-            log::info("Moved to page: {}", m_currentPage);
         }
     }
     
@@ -266,12 +232,6 @@ protected:
         
         Mod::get()->setSavedValue(m_codes[index].saveKey, !originalValue);
         updateProgressDisplay();
-        
-        log::info("Code {} {} {}", 
-            m_codes[index].code, 
-            isChecked ? "checked" : "unchecked",
-            m_codes[index].saveKey
-        );
     }
     
     void onCodeClick(CCObject* sender) {
@@ -285,7 +245,6 @@ protected:
         if (auto layer = scene->getChildByType<SecretLayer5>(0)) {
             if (layer->m_textInput && layer->m_wraithButton) {
                 layer->m_textInput->setString(code.c_str());
-                log::info("Auto-inputted code: {}", code);
                 layer->m_wraithButton->activate();
                 Mod::get()->setSavedValue(m_codes[index].saveKey, true);
                 updateProgressDisplay();
@@ -296,8 +255,11 @@ protected:
     }
 
 public:
-    static CodesPopup* create() {
+    static CodesPopup* create(std::vector<CodeInfo> externalCodes = {}) {
         auto ret = new CodesPopup();
+        if (!externalCodes.empty()) {
+            ret->m_codes = std::move(externalCodes);
+        }
         if (ret->initAnchored(340.f, 280.f)) {
             ret->autorelease();
             return ret;
@@ -307,17 +269,71 @@ public:
     }
 };
 
-#include <Geode/modify/SecretLayer5.hpp>
+class InfoOKDelegate : public CCNode, public FLAlertLayerProtocol {
+public:
+    std::function<void()> onOK;
+    static InfoOKDelegate* create(std::function<void()> cb) {
+        auto p = new InfoOKDelegate();
+        if (p && p->init()) {
+            p->onOK = std::move(cb);
+            p->autorelease();
+            return p;
+        }
+        delete p;
+        return nullptr;
+    }
+    void FLAlert_Clicked(FLAlertLayer* layer, bool btn2) override {
+        if (!btn2 && onOK) onOK();
+        this->removeFromParent();
+    }
+};
+
 class $modify(MySecretLayer5, SecretLayer5) {
     struct Fields {
         CCMenuItemSpriteExtra* m_codesButton = nullptr;
+        EventListener<web::WebTask> m_listener;
+        std::vector<CodeInfo> m_codes;
+        bool m_loaded = false;
     };
 
     bool init() {
         if (!SecretLayer5::init()) {
             return false;
         }
+        bool codesSecret = Mod::get()->getSettingValue<bool>("secret");
+        bool soggy = Mod::get()->getSettingValue<bool>("soggy");
+        m_fields->m_listener.bind([this] (web::WebTask::Event* e) {
+            if (web::WebResponse* res = e->getValue()) {
+                auto body = res->string().unwrapOr("");
+                try {
+                    std::regex item(R"(\{\s*\"([^\"]*)\"\s*,\s*\"([^\"]*)\"\s*,\s*\"([^\"]*)\"\s*\})");
+                    std::sregex_iterator it(body.begin(), body.end(), item);
+                    std::sregex_iterator end;
+                    std::vector<CodeInfo> parsed;
+                    for (; it != end; ++it) {
+                        CodeInfo ci;
+                        ci.code = (*it)[1].str();
+                        ci.description = (*it)[2].str();
+                        ci.saveKey = (*it)[3].str();
+                        if (ci.saveKey.empty() && !ci.code.empty()) ci.saveKey = ci.code + "_checked";
+                        if (!ci.code.empty()) parsed.push_back(std::move(ci));
+                    }
+                    m_fields->m_codes = std::move(parsed);
+                    m_fields->m_loaded = true;
+                } catch (std::exception const& ex) {
+                    m_fields->m_loaded = false;
+                }
+            } 
+        });
 
+    auto req = web::WebRequest();
+    if (codesSecret == true) {
+        m_fields->m_listener.setFilter(req.get("https://raw.githubusercontent.com/dulakgg/codes/main/secretcodes.json"));
+    } else if (soggy) {
+        m_fields->m_listener.setFilter(req.get("https://raw.githubusercontent.com/dulakgg/codes/main/soggycodes.json"));
+    } else {
+        m_fields->m_listener.setFilter(req.get("https://raw.githubusercontent.com/dulakgg/codes/main/codes.json"));
+    }
         auto winSize = CCDirector::sharedDirector()->getWinSize();
 
         auto buttonSprite = ButtonSprite::create("Codes", "goldFont.fnt", "GJ_button_04.png", 1.0f);
@@ -338,14 +354,26 @@ class $modify(MySecretLayer5, SecretLayer5) {
         menu->addChild(codesButton);
 
         m_fields->m_codesButton = codesButton;
-
-        log::info("Codes button added to top right corner at position ({}, {})", winSize.width - 60.f, winSize.height - 60.f);
-        log::info("Wraith Helper button successfully added to SecretLayer5");
-
         return true;
     }
 
     void onCodesButton(CCObject*) {
-        CodesPopup::create()->show();
+        if (m_fields->m_codes.empty()) {
+            log::error("No codes loaded from remote; not showing popup.");
+            return;
+        }
+
+    bool isNew = Mod::get()->getSettingValue<bool>("new-p");
+    if (isNew) {
+            auto delegate = InfoOKDelegate::create([this]() {
+                Mod::get()->setSettingValue<bool>("new-p", false);
+                CodesPopup::create(m_fields->m_codes)->show();
+            });
+            this->addChild(delegate);
+            auto info = FLAlertLayer::create(delegate, "Info", "You can click the codes to auto input them!", "OK", nullptr);
+            info->show();
+        } else {
+            CodesPopup::create(m_fields->m_codes)->show();
+        }
     }
 };

@@ -1,5 +1,5 @@
 {
-	"geode": "4.6.3",
+	"geode": "4.7.0",
 	"gd": {
 		"win": "2.2074",
 		"mac": "2.2074",
@@ -8,7 +8,7 @@
 	},
 	"id": "dulak.wraith-help",
 	"name": "Wraith Helper",
-	"version": "1.2.1",
+	"version": "2.0.0",
 	"developer": "Dulak",
 	"description": "Wraith codes tracker",
 	"links": {
@@ -17,5 +17,22 @@
 	"dependencies": {
         "geode.node-ids": ">=1.21.1"
     },
-	"tags": ["enhancement", "interface", "offline"]
+	"tags": ["enhancement", "interface", "offline"],
+	 "settings": {
+		 "new-p": {
+            "name": "tutorial",
+            "type": "bool",
+            "default": true
+        },
+		"secret": {
+			"name": "keep the codes secret",
+			"type": "bool",
+			"default": false
+		},
+		"soggy": {
+			"name": "soggy? What are you doing here?",
+			"type": "bool",
+			"default": false
+		}
+	}
 }
