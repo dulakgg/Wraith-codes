@@ -2,6 +2,8 @@
 - Added auto code Repo (My life and geode mods life is so much easier now)
 - Added a secret codes mode so you don't know the codes 
 - Added soggy (i recommend soggy code mod for best experience)
+- Made UI much better
+- Refractored code so i actually understand it :)
   
 # 1.2.1
 - Added newest code.
