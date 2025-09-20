@@ -19,11 +19,6 @@
     },
 	"tags": ["enhancement", "interface", "offline"],
 	 "settings": {
-		 "new-p": {
-            "name": "tutorial",
-            "type": "bool",
-            "default": true
-        },
 		"secret": {
 			"name": "keep the codes secret",
 			"type": "bool",
