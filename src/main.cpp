@@ -4,12 +4,11 @@
 #include <Geode/modify/SecretLayer5.hpp>
 #include <matjson.hpp>
 
-
 using namespace geode::prelude;
 
-class MyPopup : public geode::Popup<> {
+class MyPopup : public geode::Popup {
 protected:
-    EventListener<web::WebTask> m_listener;
+    async::TaskHolder<geode::utils::web::WebResponse> m_listener;
     size_t m_currentPage = 0;
     static constexpr size_t kPerPage = 5; 
     CCMenu* m_contentMenu = nullptr;
@@ -20,13 +19,15 @@ protected:
     CCLabelBMFont* m_titleLabel = nullptr;
     CCLabelBMFont* m_codeLabel = nullptr;
     std::map<std::string, std::tuple<std::string, std::string> > codes = {};
-    std::vector<std::string> m_keys; 
-    bool setup() override {
+    std::vector<std::string> m_keys;
+
+    bool init() {
+        if (!Popup::init(320.f, 260.f)) return false;
         
         this->setTitle("Wraith helper");
 
-    m_contentMenu = CCMenu::create();
-    m_contentMenu->setContentSize({ m_size.width - 4.f, 140.f });
+        m_contentMenu = CCMenu::create();
+        m_contentMenu->setContentSize({ m_size.width - 4.f, 140.f });
         m_contentMenu->ignoreAnchorPointForPosition(false);
         m_contentMenu->setAnchorPoint({ 0.5f, 0.5f });
         m_contentMenu->setPosition({ m_size.width / 2, m_size.height / 2 - 10.f });
@@ -37,6 +38,7 @@ protected:
         updatePageUI();
         return true;
     }
+
     void updatePageUI() {
         auto totalItems = m_keys.size();
         if (totalItems == 0) {
@@ -54,7 +56,7 @@ protected:
         size_t start = m_currentPage * kPerPage;
         size_t end = std::min(start + kPerPage, totalItems);
 
-    float containerW = m_contentMenu ? m_contentMenu->getContentSize().width : (m_size.width - 4.f);
+        float containerW = m_contentMenu ? m_contentMenu->getContentSize().width : (m_size.width - 4.f);
         float yTop = (m_contentMenu ? m_contentMenu->getContentSize().height : 140.f) + 20.f;
         float lineH = 28.f;
 
@@ -119,6 +121,7 @@ protected:
 
         updateProgressDisplay();
     }
+
 	void rebuildIndex() {
         m_keys.clear();
         m_keys.reserve(codes.size());
@@ -131,11 +134,14 @@ protected:
                 auto const& codeB = std::get<1>(tb);
                 if (codeA != codeB) return codeA < codeB; 
                 return a < b;
-            });
+            }
+        );
     }
+
     size_t totalPages() const {
         return (m_keys.size() + kPerPage - 1) / kPerPage;
     }
+
     void onInfo(CCObject* sender) {
         auto button = static_cast<CCMenuItemSpriteExtra*>(sender);
         int index = button ? button->getTag() : -1;
@@ -145,10 +151,24 @@ protected:
         auto const& reward = std::get<0>(tup);
         FLAlertLayer::create("Code Info", reward.c_str(), "OK")->show();
     }
+
 	void downloadCodes() {
-        m_listener.bind([this](web::WebTask::Event* e) {
-            if (auto* res = e->getValue()) {
-                auto body = res->string().unwrapOr("");
+        auto req = web::WebRequest();
+        bool codesSecret = Mod::get()->getSettingValue<bool>("secret");
+        bool soggy = Mod::get()->getSettingValue<bool>("soggy");
+        std::string url;
+        if (codesSecret) {
+            url = "https://raw.githubusercontent.com/dulakgg/codes/main/secretcodes.json";
+        } else if (soggy) {
+            url = "https://raw.githubusercontent.com/dulakgg/codes/main/soggycodes.json";
+        } else {
+            url = "https://raw.githubusercontent.com/dulakgg/codes/main/codes.json";
+        }
+
+        m_listener.spawn(
+            req.get(url),
+            [this](web::WebResponse res) {
+                auto body = res.string().unwrapOr("");
                 auto parsed = matjson::parse(body);
                 if (!parsed) {
                     log::error("JSON failed (interesting reset your dns pls)): {}", parsed.unwrapErr());
@@ -171,18 +191,7 @@ protected:
                 updatePageUI();
                 updateProgressDisplay();
             }
-        });
-
-        auto req = web::WebRequest();
-        bool codesSecret = Mod::get()->getSettingValue<bool>("secret");
-        bool soggy = Mod::get()->getSettingValue<bool>("soggy");
-        if (codesSecret) {
-            m_listener.setFilter(req.get("https://raw.githubusercontent.com/dulakgg/codes/main/secretcodes.json"));
-        } else if (soggy) {
-            m_listener.setFilter(req.get("https://raw.githubusercontent.com/dulakgg/codes/main/soggycodes.json"));
-        } else {
-            m_listener.setFilter(req.get("https://raw.githubusercontent.com/dulakgg/codes/main/codes.json"));
-        }
+        );
     }
 	void setupPaginationControls() {
         auto paginationMenu = CCMenu::create();
@@ -283,7 +292,8 @@ protected:
 public:
     static MyPopup* create() {
         auto ret = new MyPopup();
-        if (ret->initAnchored(320.f, 260.f, "GJ_square07.png")) {
+        ret->m_bgSprite = NineSlice::create("GJ_square07.png");
+        if (ret->init()) {
             ret->autorelease();
             return ret;
         }
