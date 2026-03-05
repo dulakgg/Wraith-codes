@@ -18,11 +18,24 @@ protected:
     CCMenuItemSpriteExtra* m_nextBtn = nullptr;
     CCLabelBMFont* m_titleLabel = nullptr;
     CCLabelBMFont* m_codeLabel = nullptr;
-    std::map<std::string, std::tuple<std::string, std::string> > codes = {};
+    std::map<std::string, std::tuple<std::string, std::string, std::string> > codes = {};
     std::vector<std::string> m_keys;
 
+    bool isCodeClaimed(std::string const& key) {
+        auto* gsm = GameStatsManager::sharedState();
+        if (gsm && gsm->m_wraithChests) {
+            if (gsm->m_wraithChests->objectForKey(key)) return true;
+            auto it = codes.find(key);
+            if (it != codes.end()) {
+                auto const& saveKey = std::get<2>(it->second);
+                if (!saveKey.empty() && gsm->m_wraithChests->objectForKey(saveKey)) return true;
+            }
+        }
+        return Mod::get()->getSavedValue<bool>(key, false);
+    }
+
     bool init() {
-        if (!Popup::init(320.f, 260.f)) return false;
+        if (!Popup::init(330.f, 270.f)) return false;
         
         this->setTitle("Wraith helper");
 
@@ -65,7 +78,7 @@ protected:
             auto const& tup = codes.at(key);
             auto const& reward = std::get<0>(tup);
             auto const& code   = std::get<1>(tup);
-            bool claimed = Mod::get()->getSavedValue<bool>(key, false);
+            bool claimed = isCodeClaimed(key);
 
             float y = yTop - (static_cast<float>(i - start) * lineH);
 
@@ -181,9 +194,10 @@ protected:
                         auto arrRes = val.as<std::vector<matjson::Value>>();
                         if (!arrRes) continue;
                         auto const& arr = arrRes.unwrap();
-                        std::string code  = arr.size() > 0 ? arr[0].asString().unwrapOr("") : "";
-                        std::string reward = arr.size() > 1 ? arr[1].asString().unwrapOr("") : "";
-                        codes[key] = std::make_tuple(reward, code);
+                        std::string code    = arr.size() > 0 ? arr[0].asString().unwrapOr("") : "";
+                        std::string reward  = arr.size() > 1 ? arr[1].asString().unwrapOr("") : "";
+                        std::string saveKey = arr.size() > 2 ? arr[2].asString().unwrapOr("") : "";
+                        codes[key] = std::make_tuple(reward, code, saveKey);
                     }
                 }
                 rebuildIndex();
@@ -275,8 +289,6 @@ protected:
             }
         }
 
-        utils::clipboard::write(code);
-
         this->onClose(nullptr);
     }
     void updateProgressDisplay() {
@@ -284,7 +296,7 @@ protected:
         size_t total = m_keys.size();
         size_t claimed = 0;
         for (auto const& k : m_keys) {
-            if (Mod::get()->getSavedValue<bool>(k, false)) ++claimed;
+            if (isCodeClaimed(k)) ++claimed;
         }
         std::string s = std::to_string(claimed) + "/" + std::to_string(total);
         m_progressLabel->setString(s.c_str());

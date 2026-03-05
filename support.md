@@ -1,4 +1,3 @@
-if you want to support my journey <3 
-https://ko-fi.com/dulakgg
-contact me on discord:
-dulakgg
+# Support
+
+Support me and my other projects on --> [Ko-Fi](https://ko-fi.com/dulakgg) <3

@@ -1,5 +1,5 @@
 {
-	"geode": "5.0.0-beta.3",
+	"geode": "5.3.0",
 	"gd": {
 		"win": "2.2081",
 		"mac": "2.2081",
@@ -8,7 +8,7 @@
 	},
 	"id": "dulak.wraith-help",
 	"name": "Wraith Helper",
-	"version": "1.3.1",
+	"version": "2.0.0",
 	"developer": "Dulak",
 	"description": "Wraith codes tracker",
 	"links": {
@@ -17,6 +17,10 @@
 	"dependencies": {
         "geode.node-ids": ">=1.21.1"
     },
+	"issues": {
+		"info": "Submit problems on repo page (github) or @dulakgg on Discord.",
+		"url": "https://github.com/dulakgg/Wraith-codes/issues"
+	},
 	"tags": ["enhancement", "interface", "online"],
 	 "settings": {
 		"secret": {
