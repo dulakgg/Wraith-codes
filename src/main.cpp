@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-class MyPopup : public geode::Popup {
+class WraithHelperPopup : public geode::Popup {
 protected:
     async::TaskHolder<geode::utils::web::WebResponse> m_listener;
     size_t m_currentPage = 0;
@@ -37,7 +37,7 @@ protected:
     bool init() {
         if (!Popup::init(330.f, 270.f)) return false;
         
-        this->setTitle("Wraith helper");
+        this->setTitle("Wraith Helper");
 
         m_contentMenu = CCMenu::create();
         m_contentMenu->setContentSize({ m_size.width - 4.f, 140.f });
@@ -55,8 +55,8 @@ protected:
     void updatePageUI() {
         auto totalItems = m_keys.size();
         if (totalItems == 0) {
-            if (m_titleLabel) m_titleLabel->setString("Loading...");
-            if (m_codeLabel) m_codeLabel->setString("Loading...");
+            if (m_titleLabel) m_titleLabel->setString("...");
+            if (m_codeLabel) m_codeLabel->setString("...");
             if (m_pageLabel) m_pageLabel->setString("Page 0/0");
             if (m_contentMenu) m_contentMenu->removeAllChildren();
             if (m_progressLabel) m_progressLabel->setString("0/0");
@@ -71,7 +71,7 @@ protected:
 
         float containerW = m_contentMenu ? m_contentMenu->getContentSize().width : (m_size.width - 4.f);
         float yTop = (m_contentMenu ? m_contentMenu->getContentSize().height : 140.f) + 20.f;
-        float lineH = 28.f;
+        float lineH = 35.f;
 
         for (size_t i = start; i < end; ++i) {
             auto const& key = m_keys[i];
@@ -104,19 +104,19 @@ protected:
 
             auto infoSprite = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
             infoSprite->setScale(0.7f);
-            auto infoBtn = CCMenuItemSpriteExtra::create(infoSprite, this, menu_selector(MyPopup::onInfo));
+            auto infoBtn = CCMenuItemSpriteExtra::create(infoSprite, this, menu_selector(WraithHelperPopup::onInfo));
             infoBtn->setTag(static_cast<int>(i));
-            float infoX = leftX + codeLabel->getScaledContentSize().width + 8.f;
+            float infoX = leftX + codeLabel->getScaledContentSize().width + 11.f;
             infoBtn->setPosition({infoX, y});
             m_contentMenu->addChild(infoBtn);
 
-            auto inputBtn = CCMenuItemSpriteExtra::create(inputSprite, this, menu_selector(MyPopup::onApplyCode));
+            auto inputBtn = CCMenuItemSpriteExtra::create(inputSprite, this, menu_selector(WraithHelperPopup::onApplyCode));
             inputBtn->setTag(static_cast<int>(i));
             inputBtn->setPosition({rightX, y});
             if (claimed) {
                 inputBtn->setEnabled(false);
                 inputBtn->setOpacity(160);
-                inputSprite->setColor(ccColor3B{150,255,170});
+                inputSprite->setColor(ccColor3B{ 0, 255, 47 });
             }
             m_contentMenu->addChild(inputBtn);
         }
@@ -184,7 +184,7 @@ protected:
                 auto body = res.string().unwrapOr("");
                 auto parsed = matjson::parse(body);
                 if (!parsed) {
-                    log::error("JSON failed (interesting reset your dns pls)): {}", parsed.unwrapErr());
+                    log::error("JSON failed (interesting, reset your dns pls)): {}", parsed.unwrapErr());
                     return;
                 }
                 auto json = parsed.unwrap();
@@ -209,14 +209,14 @@ protected:
     }
 	void setupPaginationControls() {
         auto paginationMenu = CCMenu::create();
-        paginationMenu->setContentSize({300.f, 40.f});
+        paginationMenu->setContentSize({getContentSize().width - 30.f, 40.f});
         paginationMenu->ignoreAnchorPointForPosition(false);
         paginationMenu->setAnchorPoint({0.5f, 0.5f});
-        paginationMenu->setPosition({m_size.width / 2, 40.f});
+        paginationMenu->setPosition({m_size.width / 2.f, 39.f});
 
         paginationMenu->setLayout(RowLayout::create()
             ->setAxisAlignment(AxisAlignment::Center)
-            ->setGap(20.f)
+            ->setGap(14.f)
         );
 
         auto prevSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -225,7 +225,7 @@ protected:
         m_prevBtn = CCMenuItemSpriteExtra::create(
             prevSprite,
             this,
-            menu_selector(MyPopup::onPrevButton)
+            menu_selector(WraithHelperPopup::onPrevButton)
         );
         
         auto nextSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -234,22 +234,25 @@ protected:
         m_nextBtn = CCMenuItemSpriteExtra::create(
             nextSprite,
             this,
-            menu_selector(MyPopup::onNextButton)
+            menu_selector(WraithHelperPopup::onNextButton)
         );
         
         paginationMenu->addChild(m_prevBtn);
-        paginationMenu->addChild(m_nextBtn);
 
         m_pageLabel = CCLabelBMFont::create("Page 0/0", "bigFont.fnt");
         m_pageLabel->setScale(0.35f);
         paginationMenu->addChild(m_pageLabel);
 
-        m_progressLabel = CCLabelBMFont::create("0/0", "goldFont.fnt");
-        m_progressLabel->setScale(0.35f);
-        paginationMenu->addChild(m_progressLabel);
+        paginationMenu->addChild(m_nextBtn);
 
         paginationMenu->updateLayout();
         m_mainLayer->addChild(paginationMenu);
+
+        m_progressLabel = CCLabelBMFont::create("0/0", "goldFont.fnt");
+        m_progressLabel->setScale(1.f);
+        m_progressLabel->setAnchorPoint({1.f, 1.f});
+        m_progressLabel->setPosition({m_size.width - 15.f, m_size.height - 5.f});
+        m_mainLayer->addChild(m_progressLabel);
     }
 	void onNextButton(CCObject*) {
         auto pages = totalPages();
@@ -302,8 +305,8 @@ protected:
         m_progressLabel->setString(s.c_str());
     }
 public:
-    static MyPopup* create() {
-        auto ret = new MyPopup();
+    static WraithHelperPopup* create() {
+        auto ret = new WraithHelperPopup();
         ret->m_bgSprite = NineSlice::create("GJ_square07.png");
         if (ret->init()) {
             ret->autorelease();
@@ -337,6 +340,6 @@ class $modify(MySecretLayer5, SecretLayer5) {
 		return true;
 	}
 	void onMyButton(CCObject*) {
-		MyPopup::create()->show();
+		WraithHelperPopup::create()->show();
 	}
 };
