@@ -15,4 +15,4 @@ For making my code actual code and enabling cross-platform support.
 For updating thew mod to geode v5.
 
 
-**Version:** v1.4.0
+**Version:** v1.5.0

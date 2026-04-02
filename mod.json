@@ -8,11 +8,13 @@
 	},
 	"id": "dulak.wraith-help",
 	"name": "Wraith Helper",
-	"version": "1.4.0",
+	"version": "1.5.0",
 	"developer": "Dulak",
 	"description": "Wraith codes tracker",
 	"links": {
-        "source": "https://github.com/dulakgg/Wraith-codes"
+        "source": "https://github.com/dulakgg/Wraith-codes",
+		"homepage": "https://www.dulakgg.me/",
+		"community": "https://discord.gg/CQFyRJDP5y"
     },
 	"dependencies": {
         "geode.node-ids": ">=1.21.1"

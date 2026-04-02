@@ -1,3 +1,7 @@
+# 1.5.0
+- Adjusted popup to look as good as possible
+- Added more sources
+
 # 1.4.0
 - Updated to geode v5 for gd 2.2081
 - Added the long waited feature now the mods actually will check your save file for what codes you redeemed
